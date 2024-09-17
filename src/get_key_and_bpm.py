@@ -1,7 +1,10 @@
 import os
 import librosa
 import numpy as np
-from src.log import logger
+from src.log import get_logger
+
+logger = get_logger(__name__)
+
 
 def detect_mode(chroma, key_index):
     """检测调式（大调或小调）"""
@@ -11,7 +14,7 @@ def detect_mode(chroma, key_index):
 
     # 计算当前音调的 Chroma 特征
     chroma_mean = np.mean(chroma, axis=1)
-    
+
     # 旋转模板以匹配当前的 key_index
     major_template = np.roll(major_template, key_index)
     minor_template = np.roll(minor_template, key_index)
@@ -20,7 +23,8 @@ def detect_mode(chroma, key_index):
     major_score = np.dot(chroma_mean, major_template)
     minor_score = np.dot(chroma_mean, minor_template)
 
-    return 'Major' if major_score > minor_score else 'Minor'
+    return "Major" if major_score > minor_score else "Minor"
+
 
 def get_key_and_bpm(audio_file):
     """
@@ -31,7 +35,7 @@ def get_key_and_bpm(audio_file):
     """
     try:
         # 清理音频文件路径
-        audio_file = audio_file.strip().replace('"', '').replace("'", '')
+        audio_file = audio_file.strip().replace('"', "").replace("'", "")
 
         # 检查音频文件是否存在
         if not os.path.exists(audio_file):
@@ -52,7 +56,7 @@ def get_key_and_bpm(audio_file):
         chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
         chroma_mean = np.mean(chroma, axis=1)
         key_index = np.argmax(chroma_mean)
-        keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         key = keys[key_index]
         mode = detect_mode(chroma, key_index)
 
@@ -62,4 +66,3 @@ def get_key_and_bpm(audio_file):
     except Exception as e:
         logger.error(f"An error occurred while processing the audio file: {e}")
         return None, None, None
-

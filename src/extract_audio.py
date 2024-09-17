@@ -1,11 +1,14 @@
 import os
 from moviepy.editor import VideoFileClip  # 确保安装了 moviepy 库
-from src.log import logger
+from src.log import get_logger
+
+logger = get_logger(__name__)
+
 
 def extract_audio(input_file):
     """
     Extracts the audio from the input file and saves it to the output file.
-    
+
     :param input_file: Path to the input video file.
     :return: Paths to the temporary video and audio files.
     """
@@ -52,4 +55,3 @@ def extract_audio(input_file):
     except Exception as e:
         logger.error(f"An error occurred while extracting audio: {e}")
         raise
-

@@ -1,6 +1,8 @@
 import os
 from moviepy.editor import AudioFileClip
-from src.log import logger
+from src.log import get_logger
+
+logger = get_logger(__name__)
 
 
 def audio_clip(audio_file_path, start_time, end_time):

@@ -1,7 +1,9 @@
 import asyncio
 import os
 import edge_tts
-from src.log import logger
+from src.log import get_logger
+
+logger = get_logger(__name__)
 
 
 async def get_edge_tts_voices():
