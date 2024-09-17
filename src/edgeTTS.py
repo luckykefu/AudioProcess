@@ -23,6 +23,7 @@ async def get_edge_tts_voices():
         logger.error(f"Failed to filter TTS voices: {e}")
         raise
 
+
 def edge_tts_func(text_input, voice_dropdown, output_dir):
     """
     使用 Edge TTS 合成音频文件。
@@ -44,14 +45,13 @@ def edge_tts_func(text_input, voice_dropdown, output_dir):
         # 定义输出文件路径
         output_file = os.path.join(output_dir, f"{text_input[:10]}_output.mp3")
 
-        logger.info(
-            f"Generating TTS audio with voice {voice_dropdown}."
-        )
+        logger.info(f"Generating TTS audio with voice {voice_dropdown}.")
 
         voice = voice_dropdown.split("_")[0]
 
         communicate = edge_tts.Communicate(
-            text_input, voice,
+            text_input,
+            voice,
         )
 
         # 异步保存音频文件
