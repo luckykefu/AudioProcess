@@ -3,59 +3,57 @@
 # Time:2024-09-17 22:04:52
 # Author:Luckykefu
 # Email:3124568493@qq.com
-# Description:
+# Description: Test cases for AudioProcess functionalities
 
 import os
+import unittest
+from src.get_key_and_bpm import get_key_and_bpm
+from src.extract_audio import extract_audio
+from src.audio_clip import audio_clip
+from src.edgeTTS import get_edge_tts_voices, edge_tts_func
+import asyncio
 
-# 获取脚本所在目录的绝对路径
+# Get the absolute path of the script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# 更改当前工作目录
+# Change the current working directory
 os.chdir(script_dir)
 
-#####################################
-# TODO: get_key_and_bpm
+class TestAudioProcess(unittest.TestCase):
 
-# from src.get_key_and_bpm import get_key_and_bpm
+    # def test_get_key_and_bpm(self):
+    #     audio_file = r"d:\Music\男孩 (Live)\男孩 (Live).flac"
+    #     bpm, key, mode = get_key_and_bpm(audio_file)
+    #     self.assertIsNotNone(bpm)
+    #     self.assertIsNotNone(key)
+    #     self.assertIsNotNone(mode)
+    #     print(f"BPM: {bpm}, Key: {key}, Mode: {mode}")
 
-# if __name__ == '__main__':
-#         # 示例调用
-#     audio_file = r"d:\Music\男孩 (Live)\男孩 (Live).flac"
-#     bpm, key, mode = get_key_and_bpm(audio_file)
-#     print(f"BPM: {bpm}, Key: {key}, Mode: {mode}")
+    # def test_extract_audio(self):
+    #     video_file = r"d:\Videos\060 云宫迅音\060.mp4"
+    #     output_file = extract_audio(video_file)
+    #     self.assertTrue(os.path.exists(output_file))
+    #     print(f"Extracted audio file: {output_file}")
 
-###############################################
-# TODO: extract_audio
+    def test_audio_clip(self):
+        audio_file = r"d:\Music\红尘客栈 - 胖哥\Music_红尘客栈.flac"
+        start_time = 10
+        end_time = 20
+        clipped_file = audio_clip(audio_file, start_time, end_time)
+        self.assertTrue(os.path.exists(clipped_file))
+        print(f"Clipped audio file: {clipped_file}")
 
-# from src.extract_audio import extract_audio
-# if __name__ == '__main__':
-#     # 示例调用
-#     audio_file = r"d:\Videos\060 云宫迅音\060.mp4"
-#     extract_audio(audio_file)
+    # def test_edge_tts(self):
+    #     async def test_voices():
+    #         voices = await get_edge_tts_voices()
+    #         self.assertIsNotNone(voices)
+    #         print(f"Available voices: {voices}")
 
-###########################################
-# TODO: audio clip
+    #     asyncio.run(test_voices())
 
-# from src.audio_clip import audio_clip
-# if __name__ == '__main__':
-#     # 示例调用
-#     audio_file = r"d:\Music\红尘客栈 - 胖哥\Music_红尘客栈.flac"
-#     start_time = 10
-#     end_time = 20
-#     audio_clip(audio_file, start_time, end_time)
-
-############################################
-# TODO: edgetts
-from src.edgeTTS import *
-
-# if __name__ == "__main__":
-#     voices =asyncio.run( get_edge_tts_voices())
-#     print(voices)
+    #     output_path = edge_tts_func("Hello world", "en-US-GuyNeural", "output")
+    #     self.assertTrue(os.path.exists(output_path))
+    #     print(f"Generated TTS audio file: {output_path}")
 
 if __name__ == "__main__":
-    
-    # 合成音频文件
-    output_path =  edge_tts_func("Hello world", "en-US-GuyNeural_Male", "output")
-    print(f"Output file path: {output_path}")
-
-    
+    unittest.main()
