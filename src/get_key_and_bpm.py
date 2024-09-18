@@ -1,68 +1,111 @@
 import os
 import librosa
 import numpy as np
-from src.log import get_logger
+from .log import get_logger
 
 logger = get_logger(__name__)
 
 
-def detect_mode(chroma, key_index):
-    """检测调式（大调或小调）"""
-    # 获得大调和小调的模板
-    major_template = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1])
-    minor_template = np.array([1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0])
+def detect_bpm(audio_file):
+    logger.info(f"Detecting BPM for {audio_file}")
+    y, sr = librosa.load(audio_file)
+    # 动态计算 hop_length
+    desired_time_shift_seconds = 0.023  # 相当于大约 23ms
+    hop_length = int(desired_time_shift_seconds * sr)
 
-    # 计算当前音调的 Chroma 特征
+    # 计算起始强度
+    onset_env = librosa.onset.onset_strength(
+        y=y, sr=sr, hop_length=hop_length, aggregate=np.median
+    )
+    tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+    logger.info(f"BPM detected: {tempo[0]}")
+    return tempo[0]
+
+
+# 定义标准的大调和小调轮廓
+MAJOR_PROFILE = np.array(
+    [6.35, 2.23, 3.48, 2.01, 1.40, 4.32, 4.79, 2.52, 3.56, 2.31, 2.11, 0.50]
+)
+
+MINOR_PROFILE = np.array(
+    [6.33, 2.69, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
+)
+
+
+def detect_key_krumhansl_schmuckler(chroma):
+    """使用 Krumhansl-Schmuckler 算法检测音频的调性"""
+    # 计算色度图的平均值
     chroma_mean = np.mean(chroma, axis=1)
 
-    # 旋转模板以匹配当前的 key_index
-    major_template = np.roll(major_template, key_index)
-    minor_template = np.roll(minor_template, key_index)
+    # 初始化最大相似度和对应的调性索引
+    max_similarity = -float("inf")
+    key_index = None
+    key_type = None
 
-    # 计算与大调和小调模板的相似度
-    major_score = np.dot(chroma_mean, major_template)
-    minor_score = np.dot(chroma_mean, minor_template)
+    # 计算每个可能的调性与色度图之间的相似度
+    for i in range(12):
+        # 旋转轮廓以匹配当前调性
+        rotated_major_profile = np.roll(MAJOR_PROFILE, i)
+        rotated_minor_profile = np.roll(MINOR_PROFILE, i)
 
-    return "Major" if major_score > minor_score else "Minor"
+        # 计算相似度
+        major_similarity = np.dot(chroma_mean, rotated_major_profile)
+        minor_similarity = np.dot(chroma_mean, rotated_minor_profile)
+
+        # 更新最大相似度和对应的调性索引
+        if major_similarity > max_similarity:
+            max_similarity = major_similarity
+            key_index = i
+            key_type = "Major"
+        if minor_similarity > max_similarity:
+            max_similarity = minor_similarity
+            key_index = i
+            key_type = "Minor"
+
+    # 定义所有可能的调性名称
+    keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    key_name = keys[key_index]
+
+    return key_name, key_type
+
+
+def detect_key(audio_file):
+    """检测音频文件的调性"""
+    logger.info(f"Detecting key for {audio_file}")
+
+    try:
+        if not os.path.exists(audio_file):
+            logger.error(f"Audio file not found: {audio_file}")
+            return None
+
+        # 加载音频文件
+        y, sr = librosa.load(audio_file)
+
+        # 计算色度图
+        chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+
+        # 使用 Krumhansl-Schmuckler 算法检测调性
+        key_name, key_type = detect_key_krumhansl_schmuckler(chroma)
+
+        logger.info(f"Key detected: {key_name} {key_type}")
+        return key_name, key_type
+
+    except librosa.ParameterError as pe:
+        logger.error(f"Librosa parameter error: {pe}")
+        return None, None
+    except Exception as e:
+        logger.error(f"Error processing audio file: {e}")
+        return None, None
 
 
 def get_key_and_bpm(audio_file):
-    """
-    获取音频文件的 BPM 和 Key。
+    bpm = detect_bpm(audio_file)
+    key_name, key_type = detect_key(audio_file)
+    return bpm, key_name, key_type
 
-    :param audio_file: 音频文件的路径。
-    :return: BPM, Key 名称, 调式
-    """
-    try:
-        # 清理音频文件路径
-        audio_file = audio_file.strip().replace('"', "").replace("'", "")
 
-        # 检查音频文件是否存在
-        if not os.path.exists(audio_file):
-            logger.error(f"Audio file not found: {audio_file}")
-            return None, None, None
-
-        # 加载音频文件
-        logger.info(f"Loading audio file: {audio_file}")
-        y, sr = librosa.load(audio_file)
-
-        # 检测 BPM
-        logger.info("Detecting BPM...")
-        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-        tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
-
-        # 检测 Key
-        logger.info("Detecting Key and Mode...")
-        chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-        chroma_mean = np.mean(chroma, axis=1)
-        key_index = np.argmax(chroma_mean)
-        keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        key = keys[key_index]
-        mode = detect_mode(chroma, key_index)
-
-        logger.info(f"BPM detected: {tempo[0]}, Key: {key}, Mode: {mode}")
-        return tempo[0], key, mode
-
-    except Exception as e:
-        logger.error(f"An error occurred while processing the audio file: {e}")
-        return None, None, None
+# 测试代码
+if __name__ == "__main__":
+    audio_file = r"d:\Music\男孩 (Live)\男孩 (Live).flac"
+    detect_bpm(audio_file)
+    detect_key(audio_file)
