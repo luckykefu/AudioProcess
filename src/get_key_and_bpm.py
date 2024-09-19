@@ -8,14 +8,14 @@ logger = get_logger(__name__)
 
 def detect_bpm(audio_file):
     logger.info(f"Detecting BPM for {audio_file}")
-    y, sr = librosa.load(audio_file)
+    y, sr = librosa.load(audio_file, sr=None)
     # 动态计算 hop_length
-    desired_time_shift_seconds = 0.023  # 相当于大约 23ms
+    desired_time_shift_seconds = 0.001  # 相当于大约 25ms
     hop_length = int(desired_time_shift_seconds * sr)
-
+    logger.info(f"Hop length: {hop_length}")
     # 计算起始强度
     onset_env = librosa.onset.onset_strength(
-        y=y, sr=sr, hop_length=hop_length, aggregate=np.median
+        y=y, sr=sr, hop_length=hop_length, aggregate=np.mean
     )
     tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
     logger.info(f"BPM detected: {tempo[0]}")
@@ -108,4 +108,4 @@ def get_key_and_bpm(audio_file):
 if __name__ == "__main__":
     audio_file = r"d:\Music\男孩 (Live)\男孩 (Live).flac"
     detect_bpm(audio_file)
-    detect_key(audio_file)
+    # detect_key(audio_file)
