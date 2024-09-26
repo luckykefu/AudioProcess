@@ -1,10 +1,13 @@
 # AudioProcess
 
 ```python
-conda create -n audioprocess python
+
+conda create -n audioprocess python -y
+
 conda activate audioprocess
 
-pip install -r requirements.txt
+pip install colorama edge_tts gradio librosa moviepy numpy 
+
 python AudioProcessWebUI.py
 
 ```

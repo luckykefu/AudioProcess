@@ -9,17 +9,13 @@ import gradio as gr
 import argparse
 
 import os
-from src.demo_split_audio_and_video import demo_split_audio_and_video
-from src.demo_BPM import demo_BPM
-from src.demo_audio_clip import demo_audio_clip
-from src.demo_edgeTTS import demo_edge_tts
+from src.demo import *
 from src.edgeTTS import *
 from src.log import get_logger
 
 logger = get_logger(__name__)
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(script_dir)
+
 
 def parse_arguments():
 
@@ -55,4 +51,7 @@ def main():
 
 
 if __name__ == "__main__":
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(script_dir)
+
     main()
